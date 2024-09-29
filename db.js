@@ -4,10 +4,10 @@ const { Schema } = mongoose;
 const bcrypt = require("bcrypt");
 
 mongoose.connect(
-  "mongodb+srv://admin:RitHSjBOuHqRFFnI@knight.33blvnl.mongodb.net/hrms"
+  "mongodb+srv://admin:RitHSjBOuHqRFFnI@knight.33blvnl.mongodb.net/thelasttrade"
 );
 
-const EmployeeSchema = new Schema(
+const UserSchema = new Schema(
   {
     name: {
       type: String,
@@ -21,75 +21,49 @@ const EmployeeSchema = new Schema(
       trim: true,
       lowercase: true,
     },
+    phone: {
+      type: Integer,
+      required: true,
+      unique: true,
+      trim: true,
+    },
     password: {
       type: String,
       required: true,
       minLength: 6,
-    },
-    department: {
-      type: String,
-      required: true,
-    },
-    designation: {
-      type: String,
-      required: true,
-    },
-    employeeCode: {
-      type: String,
-      unique: true,
-      required: true,
-      minLength: 6,
-      maxLength: 6,
-    },
-    officeTimings: {
-      type: String,
-      required: true,
-    },
-    role: {
-      type: String,
-      minLength: 5,
-      required: false,
-    },
+    }
   },
   { timestamps: true }
 );
 
-const AttendanceSchema = new Schema(
+
+// CourseDetails Schema
+const CourseDetailsSchema = new Schema(
   {
-    employee: { type: Schema.Types.ObjectId, ref: "Employee", required: true },
-    email: { type: String, required: true },
-    date: { type: Date, required: true },
-    loginTime: { type: Date, required: true },
-    logoutTime: { type: Date },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true }, // Reference to the User schema
+    email: { type: String, required: true }, // Email of the user, could also be fetched from the User reference if needed
+    courseName: { type: String, required: true }, // Name of the course the user is registered in
+    courseId: { type: String, required: true, unique: true }, // Unique identifier for the course
+    duration: { type: String, required: true }, // Duration of the course (e.g., "4 weeks", "3 months")
+    startDate: { type: Date, required: true }, // Course start date
+    endDate: { type: Date }, // Optional end date for the course
+    price: { type: Number, required: true }, // Course price
     status: {
       type: String,
-      enum: ["Absent", "Half-day", "Present", "Over-time"],
-      default: "Absent",
-    },
+      enum: ["pending", "in-progress", "completed"],
+      default: "pending",
+    }, // Status of the course for the user
   },
   { timestamps: true }
 );
 
-// Leave Schema
-const LeaveSchema = new Schema(
-  {
-    employee: { type: Schema.Types.ObjectId, ref: "Employee", required: true },
-    email: { type: String, required: true },
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
-    reason: { type: String, required: true },
-    status: {
-      type: String,
-      enum: ["Pending", "Approved", "Disapproved"],
-      default: "Pending",
-    },
-  },
-  { timestamps: true }
-);
+
+
+
 
 // Methods for Employee Schema to handle password encryption
 
-EmployeeSchema.pre("save", async function (next) {
+UserSchema.pre("save", async function (next) {
   try {
     if (!this.isModified("password")) {
       return next();
@@ -103,17 +77,17 @@ EmployeeSchema.pre("save", async function (next) {
 });
 
 // Method to compare passwords
-EmployeeSchema.methods.comparePassword = async function (candidatePassword) {
+UserSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// const SuperEmployeeSchema = new Schema({
+// const SuperUserSchema = new Schema({
 //   // Add any additional fields required for superuser
 
 // });
 
 // Extend Employee Schema with additional methods for superuser features
-EmployeeSchema.statics.addEmployee = async function (employeeData) {
+UserSchema.statics.addEmployee = async function (employeeData) {
   try {
     const employee = new this(employeeData);
     await employee.save();
@@ -123,7 +97,7 @@ EmployeeSchema.statics.addEmployee = async function (employeeData) {
   }
 };
 
-EmployeeSchema.statics.editEmployee = async function (employeeId, updatedData) {
+UserSchema.statics.editEmployee = async function (employeeId, updatedData) {
   try {
     const employee = await this.findByIdAndUpdate(employeeId, updatedData, {
       new: true,
@@ -134,7 +108,7 @@ EmployeeSchema.statics.editEmployee = async function (employeeId, updatedData) {
   }
 };
 
-EmployeeSchema.statics.deleteEmployee = async function (employeeId) {
+UserSchema.statics.deleteEmployee = async function (employeeId) {
   try {
     const employee = await this.findByIdAndDelete(employeeId);
     return employee;
@@ -143,47 +117,12 @@ EmployeeSchema.statics.deleteEmployee = async function (employeeId) {
   }
 };
 
-EmployeeSchema.statics.getAllEmployeesAttendance = async function () {
-  try {
-    const attendanceRecords = await Attendance.find().populate("employee");
-    return attendanceRecords;
-  } catch (error) {
-    throw error;
-  }
-};
 
-EmployeeSchema.statics.approveLeaveRequest = async function (leaveRequestId) {
-  try {
-    const leaveRequest = await Leave.findByIdAndUpdate(
-      leaveRequestId,
-      { status: "Approved" },
-      { new: true }
-    );
-    return leaveRequest;
-  } catch (error) {
-    throw error;
-  }
-};
-
-EmployeeSchema.statics.disapproveLeaveRequest = async function (
-  leaveRequestId
-) {
-  try {
-    const leaveRequest = await Leave.findByIdAndUpdate(
-      leaveRequestId,
-      { status: "Disapproved" },
-      { new: true }
-    );
-    return leaveRequest;
-  } catch (error) {
-    throw error;
-  }
-};
 
 // Export schemas
-const Employee = mongoose.model("User", EmployeeSchema);
-const Attendance = mongoose.model("Attendance", AttendanceSchema);
-const Leave = mongoose.model("Leave", LeaveSchema);
-// const Superuser = mongoose.model("Superuser", SuperEmployeeSchema);
+const User = mongoose.model("User", UserSchema);
 
-module.exports = { Employee, Attendance, Leave };
+const CourseDetails = mongoose.model("CourseDetails", CourseDetailsSchema);
+// const Superuser = mongoose.model("Superuser", SuperUserSchema);
+
+module.exports = { User, CourseDetails };

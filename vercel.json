@@ -1,0 +1,11 @@
+{
+  "buildCommand": "next build",
+  "cleanUrls": true,
+  "devCommand": "next dev",
+  "version": 2, 
+  "rewrites": [{ 
+        "source": "/(.*)", 
+        "destination": "/api" 
+        }] 
+}
+  

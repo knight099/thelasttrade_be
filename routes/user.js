@@ -1,60 +1,55 @@
 const express = require("express");
 const zod = require("zod");
-const { Employee, Attendance, Leave } = require("../db");
+const { User, CourseDetails } = require("../db");
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../config");
 const { authMiddleware, adminMiddleware } = require("../middleware");
 
 const router = express.Router();
 
-// Employee Signup/Registration Schema
-// const signupBody = zod.object({
-//   email: zod.string().email(),
-//   name: zod.string(),
-//   password: zod.string(),
-//   department: zod.string(),
-//   designation: zod.string(),
-//   employeeCode: zod.string(),
+// User Signup/Registration Schema
+const signupBody = zod.object({
+  email: zod.string().email(),
+  name: zod.string(),
+  password: zod.string()
+});
 
-//   officeTimings: zod.string(),
-// });
+router.post("/signup", async (req, res) => {
+  const result = signupBody.safeParse(req.body);
 
-// router.post("/signup", async (req, res) => {
-//   const result = signupBody.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({
+      message: "Invalid input",
+    });
+  }
 
-//   if (!result.success) {
-//     return res.status(400).json({
-//       message: "Invalid input",
-//     });
-//   }
+  const existingUser = await User.findOne({
+    email: req.body.email,
+    phone: req.body.phone,
+  });
 
-//   const existingUser = await Employee.findOne({
-//     email: req.body.email,
-//   });
+  if (existingUser) {
+    return res.status(400).json({
+      message: "Email/Phone already registered",
+    });
+  }
 
-//   if (existingUser) {
-//     return res.status(400).json({
-//       message: "Email already registered",
-//     });
-//   }
+  // const User = await User.create(req.body);
 
-//   const employee = await Employee.create(req.body);
+  const token = jwt.sign(
+    {
+      userId: User._id
+    },
+    JWT_SECRET
+  );
 
-//   const token = jwt.sign(
-//     {
-//       userId: employee._id,
-//       role: employee.role,
-//     },
-//     JWT_SECRET
-//   );
+  res.json({
+    message: "User created successfully",
+    token: token,
+  });
+});
 
-//   res.json({
-//     message: "User created successfully",
-//     token: token,
-//   });
-// });
-
-// Employee Signin
+// User Signin
 const signinBody = zod.object({
   email: zod.string().email(),
   password: zod.string(),
@@ -69,15 +64,15 @@ router.post("/signin", async (req, res) => {
     });
   }
 
-  const employee = await Employee.findOne({
+  const User = await User.findOne({
     email: req.body.email,
   });
 
-  if (employee && (await employee.comparePassword(req.body.password))) {
+  if (User && (await User.comparePassword(req.body.password))) {
     const token = jwt.sign(
       {
-        email: employee.email,
-        role: employee.role,
+        email: User.email,
+        // role: User.role,
       },
       JWT_SECRET
     );
@@ -85,17 +80,17 @@ router.post("/signin", async (req, res) => {
     const loginTime = new Date();
     const today = loginTime.toISOString().split("T")[0];
 
-    const addAttendance = await Attendance.create({
-      email: employee.email,
-      employee: employee._id,
-      date: today,
-      loginTime: loginTime,
-    });
+    // const addAttendance = await Attendance.create({
+    //   email: User.email,
+    //   // User: User._id,
+    //   date: today,
+    //   // loginTime: loginTime,
+    // });
 
     res.json({
       token: token,
-      role: employee.role,
-      logintime: addAttendance.loginTime,
+      role: User.role,
+      // logintime: addAttendance.loginTime,
     });
     return;
   }
@@ -106,47 +101,26 @@ router.post("/signin", async (req, res) => {
 });
 
 router.post("/signout", authMiddleware, async (req, res) => {
-  const logoutDate = new Date();
-  const today = new Date().toISOString().split("T")[0]; // Current date
+  try {
+    // Clear any cookies or tokens (if using cookies for token storage)
+    res.clearCookie("token"); // This assumes you store the JWT in a cookie
 
-  const attendance = await Attendance.findOne({
-    email: req.email, // Find by email and date
-    date: today,
-  });
+    // Optionally, handle token invalidation (e.g., by maintaining a token blacklist)
+    // You can store invalidated tokens in a database or in-memory store like Redis
 
-  if (!attendance) {
+    // Send a success response
+    return res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
     return res
-      .status(400)
-      .json({ message: "No attendance record found for today" });
+      .status(500)
+      .json({ message: "Logout failed", error: error.message });
   }
-
-  const loginDate = new Date(attendance.loginTime);
-  const hoursWorked = (logoutDate - loginDate) / (1000 * 60 * 60);
-
-  let status = "Absent";
-  if (hoursWorked >= 5 && hoursWorked < 9) {
-    status = "Half-day";
-  } else if (hoursWorked >= 9 && hoursWorked < 10) {
-    status = "Present";
-  } else if (hoursWorked >= 10) {
-    status = "Over-time";
-  }
-
-  attendance.logoutTime = logoutDate;
-  attendance.status = status;
-
-  await attendance.save();
-
-  res.json({ message: "Logout successful", attendance });
 });
 
-// Update Employee Information
+// Update User Information
 const updateBody = zod.object({
   password: zod.string().optional(),
   name: zod.string().optional(),
-  department: zod.string().optional(),
-  designation: zod.string().optional(),
-  officeTimings: zod.string().optional(),
 });
 
 router.put("/update", authMiddleware, adminMiddleware, async (req, res) => {
@@ -157,7 +131,7 @@ router.put("/update", authMiddleware, adminMiddleware, async (req, res) => {
     });
   }
 
-  await Employee.updateOne({ _id: req.email }, req.body);
+  await User.updateOne({ _id: req.email }, req.body);
 
   res.json({
     message: "Updated successfully",
@@ -168,19 +142,15 @@ router.put("/update", authMiddleware, adminMiddleware, async (req, res) => {
 router.get("/bulk", adminMiddleware, adminMiddleware, async (req, res) => {
   const filter = req.query.filter || "";
 
-  const employees = await Employee.find({
+  const Users = await User.find({
     $or: [{ name: { $regex: filter } }, { email: { $regex: filter } }],
   });
 
   res.json({
-    employees: employees.map((employee) => ({
-      email: employee.email,
-      name: employee.name,
-      department: employee.department,
-      designation: employee.designation,
-      employeeCode: employee.employeeCode,
-      officeTimings: employee.officeTimings,
-      _id: employee._id,
+    Users: Users.map((User) => ({
+      email: User.email,
+      name: User.name,
+      _id: User._id,
     })),
   });
 });
