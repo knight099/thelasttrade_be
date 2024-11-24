@@ -1,30 +1,28 @@
 const { JWT_SECRET } = require("./config");
 const jwt = require("jsonwebtoken");
-const { Employee } = require("./db");
+const { User } = require("./db");
 
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer")) {
-    return res.status(403).json({ message: "Unauthorized" });
+    return res.status(403).json({ message: "Unauthorized1" });
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const employee = await Employee.findOne({ email: decoded.email });
+    const user = await User.findOne({ email: decoded.email });
 
-    if (!employee) {
-      return res.status(403).json({ message: "Unauthorized" });
+    if (!user) {
+      return res.status(403).json({ message: "Unauthorized2" });
     }
 
-    req.employee = employee;
-    req.email = decoded.email;
-    req.role = decoded.role;
+    // req.email = decoded.email;
     next();
   } catch (err) {
-    return res.status(403).json({ message: "Unauthorized" });
+    return res.status(403).json({ message: "Unauthorized3" });
   }
 };
 

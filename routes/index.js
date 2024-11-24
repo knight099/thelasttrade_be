@@ -1,7 +1,7 @@
 const express = require("express");
 const userRouter = require("./user.js");
 const adminRouter = require("./admin.js");
-const attendanceRouter = require("./coursedetials.js");
+const attendanceRouter = require("./coursedetails.js");
 
 
 const router = express.Router();

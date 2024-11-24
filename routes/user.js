@@ -34,11 +34,11 @@ router.post("/signup", async (req, res) => {
     });
   }
 
-  // const User = await User.create(req.body);
+  const newUser = await User.create(req.body); // Renamed 'User' to 'newUser'
 
   const token = jwt.sign(
     {
-      userId: User._id
+      userId: newUser._id,
     },
     JWT_SECRET
   );
@@ -48,6 +48,7 @@ router.post("/signup", async (req, res) => {
     token: token,
   });
 });
+
 
 // User Signin
 const signinBody = zod.object({
@@ -64,15 +65,15 @@ router.post("/signin", async (req, res) => {
     });
   }
 
-  const User = await User.findOne({
+  const existingUser = await User.findOne({
     email: req.body.email,
   });
+  console.log("user", existingUser)
 
-  if (User && (await User.comparePassword(req.body.password))) {
+  if (existingUser && (await existingUser.comparePassword(req.body.password))) {
     const token = jwt.sign(
       {
         email: User.email,
-        // role: User.role,
       },
       JWT_SECRET
     );
@@ -80,17 +81,9 @@ router.post("/signin", async (req, res) => {
     const loginTime = new Date();
     const today = loginTime.toISOString().split("T")[0];
 
-    // const addAttendance = await Attendance.create({
-    //   email: User.email,
-    //   // User: User._id,
-    //   date: today,
-    //   // loginTime: loginTime,
-    // });
-
     res.json({
       token: token,
       role: User.role,
-      // logintime: addAttendance.loginTime,
     });
     return;
   }

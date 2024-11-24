@@ -81,25 +81,10 @@ UserSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// const SuperUserSchema = new Schema({
-//   // Add any additional fields required for superuser
 
-// });
-
-// Extend Employee Schema with additional methods for superuser features
-UserSchema.statics.addEmployee = async function (employeeData) {
+UserSchema.statics.editUser = async function (email, updatedData) {
   try {
-    const employee = new this(employeeData);
-    await employee.save();
-    return employee;
-  } catch (error) {
-    throw error;
-  }
-};
-
-UserSchema.statics.editEmployee = async function (employeeId, updatedData) {
-  try {
-    const employee = await this.findByIdAndUpdate(employeeId, updatedData, {
+    const user = await this.findByIdAndUpdate(email, updatedData, {
       new: true,
     });
     return employee;
@@ -108,14 +93,16 @@ UserSchema.statics.editEmployee = async function (employeeId, updatedData) {
   }
 };
 
-UserSchema.statics.deleteEmployee = async function (employeeId) {
+UserSchema.statics.deleteUser = async function (email) {
   try {
-    const employee = await this.findByIdAndDelete(employeeId);
-    return employee;
+    const user = await this.findByIdAndDelete(email);
+    return user;
   } catch (error) {
     throw error;
   }
 };
+
+
 
 
 

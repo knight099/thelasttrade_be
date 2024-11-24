@@ -32,11 +32,7 @@ router.post("/user", authMiddleware, adminMiddleware, async (req, res) => {
   });
 });
 
-router.put(
-  "/user/:id",
-  authMiddleware,
-  adminMiddleware,
-  async (req, res) => {
+router.put("/user/:id", authMiddleware, adminMiddleware, async (req, res) => {
     const result = adminUserBody.safeParse(req.body);
     if (!result.success) {
       return res.status(400).json({
