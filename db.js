@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 const bcrypt = require("bcrypt");
 
 mongoose.connect(
-  "mongodb+srv://admin:RitHSjBOuHqRFFnI@knight.33blvnl.mongodb.net/thelasttrade"
+  process.env.MONGODB_URL
 );
 
 const UserSchema = new Schema(
