@@ -2,10 +2,11 @@ const express = require("express");
 const zod = require("zod");
 const { User, CourseDetails } = require("../db");
 const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = require("../config");
+// const { JWT_SECRET } = require("../config");
 const { authMiddleware, adminMiddleware } = require("../middleware");
 
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // User Signup/Registration Schema
 const signupBody = zod.object({
