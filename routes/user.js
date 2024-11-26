@@ -2,6 +2,7 @@ const express = require("express");
 const zod = require("zod");
 const { User, CourseDetails } = require("../db");
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
 // const { JWT_SECRET } = require("../config");
 const { authMiddleware, adminMiddleware } = require("../middleware");
 
@@ -69,7 +70,6 @@ router.post("/signin", async (req, res) => {
   const existingUser = await User.findOne({
     email: req.body.email,
   });
-  console.log("user", existingUser)
 
   if (existingUser && (await existingUser.comparePassword(req.body.password))) {
     const token = jwt.sign(
@@ -95,6 +95,7 @@ router.post("/signin", async (req, res) => {
 });
 
 router.post("/signout", authMiddleware, async (req, res) => {
+  console.log("Signout API called");
   try {
     // Clear any cookies or tokens (if using cookies for token storage)
     res.clearCookie("token"); // This assumes you store the JWT in a cookie

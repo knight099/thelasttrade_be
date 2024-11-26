@@ -2,9 +2,12 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const bcrypt = require("bcrypt");
+require("dotenv").config();
+
+const DB_URL = process.env.MONGODB_URL;
 
 mongoose.connect(
-  process.env.MONGODB_URL
+  DB_URL
 );
 
 const UserSchema = new Schema(
