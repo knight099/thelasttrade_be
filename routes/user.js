@@ -73,14 +73,15 @@ router.post("/signin", async (req, res) => {
 
   if (existingUser && (await existingUser.comparePassword(req.body.password))) {
     const token = jwt.sign(
-      {
-        email: User.email,
-      },
-      JWT_SECRET
+      { userId: existingUser._id },
+      JWT_SECRET,
+      { expiresIn: "1h" }
     );
 
     const loginTime = new Date();
     const today = loginTime.toISOString().split("T")[0];
+    const role = existingUser.role;
+
 
     res.json({
       token: token,
