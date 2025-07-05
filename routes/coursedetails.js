@@ -34,15 +34,15 @@ router.get('/user/courses', authMiddleware, async (req, res) => {
 });
 
 
-router.add('/add', async (req, res) => {
+router.post('/add', async (req, res) => {
   try {
     const { email, name, courseName, courseId, startDate, status } = req.body;
     const parsedCourseDetails = Courses.parse({
-      email,
-      name,
-      courseName,
-      courseId,
-      startDate,
+      email: email,
+      name: name,
+      courseName: courseName,
+      courseId: courseId,
+      startDate: startDate,
       status,
     });
 
@@ -50,10 +50,18 @@ router.add('/add', async (req, res) => {
       return res.status(400).json({ message: 'Incomplete course details' });
     }
     const newCourse = new Courses({ courseName, description, price });
-    await newCourse.save();
+    const newCourseDetail = new CourseDetails({
+      email: parsedCourseDetails.email,
+      name: parsedCourseDetails.name,
+      courseName: parsedCourseDetails.courseName,
+      courseId: parsedCourseDetails.courseId,
+      startDate: parsedCourseDetails.startDate,
+      status: parsedCourseDetails.status,
+    });
     res.status(201).json({ message: 'Course added successfully', courseId: newCourse._id });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
-  });
+  }
+});
 
-module.exports = router;
+  module.exports = router;
